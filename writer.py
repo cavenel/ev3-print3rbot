@@ -64,16 +64,6 @@ class mymotor(motor):
 
 class Writer():
     
-    # All coordinates are in Lego distance (1 = distance between two holes center)
-    # Coordinates of gear centre A
-    xA, yA = 0.,0.
-    # Coordinates of gear centre B
-    xB, yB = 6.,0.
-    # Length between articulation and pen
-    r1 = 15.+1.3125
-    # Length between gear centre and articulation
-    r2 = 11.
-    
     def __init__(self, calibrate=True):
         self.mot_A    = mymotor(OUTPUT_A)
 
@@ -151,11 +141,29 @@ class Writer():
         self.mot_A.reset_position()
         self.mot_B.reset_position()
         
+    # All coordinates are in Lego distance (1 = distance between two holes center)
+    # Coordinates of gear centre A
     xA, yA = 0.,0.
+    # Coordinates of gear centre B
     xB, yB = 6.,0.
-    r1 = 15.+1.3125
+    # Length between articulation and pen
+    r1 = 16.+1.3125
+    # Length between gear centre and articulation
     r2 = 11.
 
+    #      .E   (pen is in coordinates E = (xE,yE))
+    #     / \
+    #    /   \
+    #   /     \
+    # C.       .D
+    #   \     /
+    #    \   /
+    #    A. .B
+    #   -------
+    #   [robot]
+    #   -------
+
+    ## Computes the intersection of 2 circles of centres x0,y0 and x1,y1 and radius resp. R0 and R1.
     @staticmethod
     def get_coord_intersec (x0, y0, x1, y1, R0, R1):
         if y0 == y1:
@@ -172,8 +180,9 @@ class Writer():
         yB_ = N - xB_ * (x0-x1)/(y0-y1)
         return (xA_,yA_),(xB_,yB_)
 
+    ## Converts coordinates xE, yE to angles of robot arms.
     @staticmethod
-    def position_to_angles (xE, yE):
+    def coordinates_to_angles (xE, yE):
         try:
             ((xIA, yIA), (xIA2, yIA2)) = Writer.get_coord_intersec (xE, yE, Writer.xA, Writer.yA, Writer.r1, Writer.r2)
             if xIA > xIA2:
@@ -189,17 +198,19 @@ class Writer():
         beta =  360. * math.acos((xIB-Writer.xB)/Writer.r2) / (2.*math.pi) 
         return (alpha, beta)
 
+    ## converts coordinates x,y into motor position
     @staticmethod
-    def position_to_motorpos (x, y):
+    def coordinates_to_motorpos (x, y):
         def angle_to_pos (angle):
             #0     = 14
             #-2970 = 90
             return ((angle-14.) * 2970. / (90.-14.))
-        (alpha, beta) = Writer.position_to_angles (x, y)
+        (alpha, beta) = Writer.coordinates_to_angles (x, y)
         return angle_to_pos (alpha), -angle_to_pos (beta)
-        
+
+    ## Converts angles of arms to coordinates.
     @staticmethod
-    def angles_to_position (alpha, beta):
+    def angles_to_coordinates (alpha, beta):
         xC = Writer.xA - Writer.r2 * math.cos((2.*math.pi) * alpha/360.)
         yC = Writer.yA + Writer.r2 * math.sin((2.*math.pi) * alpha/360.)
         xD = Writer.xB + Writer.r2 * math.cos((2.*math.pi) * beta/360.)
@@ -210,15 +221,16 @@ class Writer():
             yE = yE2
         return xE, yE
     
+    ## Converts motor position to coordinates
     @staticmethod
-    def motorpos_to_position (pos1, pos2):
+    def motorpos_to_coordinates (pos1, pos2):
         def pos_to_angle (pos):
             #0     = 14
             #-2970 = 90
             return 14. + pos * (90.-14) / 2970.
         
         (alpha, beta) = (pos_to_angle(pos1), pos_to_angle(-pos2))
-        return Writer.angles_to_position (alpha, beta)
+        return Writer.angles_to_coordinates (alpha, beta)
     
     @staticmethod
     def get_angle (xA, yA, xB, yB, xC, yC):
@@ -233,7 +245,7 @@ class Writer():
 
     def set_speed_to_coordinates (self,x,y,max_speed,initx=None,inity=None,brake=0.):
         posB, posA = self.mot_B.position, self.mot_A.position
-        myx, myy = Writer.motorpos_to_position (posB, posA)
+        myx, myy = Writer.motorpos_to_coordinates (posB, posA)
         dist = math.sqrt((myx-x)*(myx-x) + (myy-y)*(myy-y))
         if (initx or inity):
             too_far = (180-Writer.get_angle(initx, inity, x, y, myx, myy) >= 90)
@@ -245,7 +257,7 @@ class Writer():
         nextx = myx + (x - myx) / (dist * 100.)
         nexty = myy + (y - myy) / (dist * 100.)
         
-        next_posB, next_posA = Writer.position_to_motorpos (nextx, nexty)
+        next_posB, next_posA = Writer.coordinates_to_motorpos (nextx, nexty)
         
         speed = max_speed
         slow_down_dist = (max_speed / 50.)
@@ -268,7 +280,7 @@ class Writer():
     def goto_point (self, x,y, brake=1., last_x=None, last_y=None, max_speed=70.):
         if (last_x == None or last_y == None):
             initposB, initposA = self.mot_B.position, self.mot_A.position
-            initx, inity = Writer.motorpos_to_position (initposB, initposA)
+            initx, inity = Writer.motorpos_to_coordinates (initposB, initposA)
         else:
             initx, inity = last_x, last_y
         max_speed_ = 20
@@ -295,7 +307,7 @@ class Writer():
                 return self.follow_path (list_points, max_speed)
             (x,y) = list_points.pop(0)
             posB, posA = self.mot_B.position, self.mot_A.position
-            myx, myy = Writer.motorpos_to_position (posB, posA)
+            myx, myy = Writer.motorpos_to_coordinates (posB, posA)
             try:
                 (x2,y2) = list_points[0]
                 angle = Writer.get_angle (myx, myy, x, y, x2, y2)
@@ -363,7 +375,7 @@ class Writer():
         if not os.path.exists(path):
             return
         posB, posA = self.mot_B.position, self.mot_A.position
-        startx, starty = Writer.motorpos_to_position (posB, posA)
+        startx, starty = Writer.motorpos_to_coordinates (posB, posA)
         self.pen_up()
         pen_up = True
         import evdev
@@ -397,7 +409,7 @@ class Writer():
 wri = Writer(calibrate = True)
 
 wri.pen_up()
+wri.draw_image(image_file = 'images/test.svg',max_speed=50)
 #wri.follow_mouse()
-wri.draw_image(image_file = 'images/bonjour.svg',max_speed=50)
 wri.pen_up()
 
