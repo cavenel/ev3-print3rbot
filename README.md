@@ -12,4 +12,4 @@ apt-get install libboost-python-dev python-setuptools python-pil
 easy_install http://ddemidov.github.io/ev3dev-lang-python/python_ev3dev-latest.egg
 ```
 
-See [the project page](http://www.ev3dev.org/projects/2014/07/16/Drawing-Robot/) for building instructions.
+See [the project page](http://www.ev3dev.org/projects/2015/05/06/Ev3-Print3rbot/) for building instructions.
