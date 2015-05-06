@@ -344,11 +344,12 @@ class Writer():
         itemlist = xmldoc.getElementsByTagName('path') 
         itemlist = filter(lambda x: x.attributes['id'].value != "borders", itemlist)
         
-        path = " ".join([s.attributes['d'].value for s in itemlist])
+        path = [s.attributes['d'].value for s in itemlist]
         
         list_points = []
         actual = (0+0j)
-        for p in path:
+        for p_ in path:
+            p = parse_path(p_)
             start = p.point(0.)
             if not feq(actual,start):
                 list_points.append(0)
