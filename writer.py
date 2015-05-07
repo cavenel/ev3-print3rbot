@@ -349,19 +349,20 @@ class Writer():
         list_points = []
         actual = (0+0j)
         for p_ in path:
-            p = parse_path(p_)
-            start = p.point(0.)
-            if not feq(actual,start):
-                list_points.append(0)
-                list_points.append(svg_point_to_coord(start))
-                list_points.append(1)
-            if (not isinstance(p, Line)):
-                length = p.length(error=1e-2)
-                for i in range(3,int(math.floor(length)),3):
-                    list_points.append(svg_point_to_coord(p.point(i/length)))
-            end = p.point(1.)
-            list_points.append(svg_point_to_coord(end))
-            actual = end
+            p__ = parse_path(p_)
+            for p in p__:
+                start = p.point(0.)
+                if not feq(actual,start):
+                    list_points.append(0)
+                    list_points.append(svg_point_to_coord(start))
+                    list_points.append(1)
+                if (not isinstance(p, Line)):
+                    length = p.length(error=1e-2)
+                    for i in range(3,int(math.floor(length)),3):
+                        list_points.append(svg_point_to_coord(p.point(i/length)))
+                end = p.point(1.)
+                list_points.append(svg_point_to_coord(end))
+                actual = end
         list_points.append(0)
         return list_points
         
