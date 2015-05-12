@@ -22,7 +22,7 @@ easy_install http://ddemidov.github.io/ev3dev-lang-python/python_ev3dev-latest.e
 
 ### Drawing an SVG image
 
-The EV3 Print3rbot can draw directly from SVG images. The images must contain only paths without transformations. To convert any SVG image, you can use inkscape in command line:
+The EV3 Print3rbot can draw directly from SVG images, using the [svg.path](https://pypi.python.org/pypi/svg.path) library (included in sources). The images must contain only paths without transformations. To convert any SVG image, you can use inkscape in command line:
 ```
 inkscape --verb=EditSelectAll --verb=ObjectToPath --verb=SelectionUnGroup --verb=FileSave --verb=FileClose --verb=FileQuit myfile.svg
 ```
