@@ -5,7 +5,7 @@ import math, os, time
 from ev3dev import *
 
 from svg.parser import parse_path
-from svg.path import Path, Line, Arc, CubicBezier, QuadraticBezier
+from svg.path import Line
         
 class mymotor(motor):
     def stop(self, stop_command='coast'):
@@ -78,11 +78,11 @@ class Writer():
         self.pen_up()
 
     def pen_up (self):
-        self.mot_lift.goto_position(40, 200, regulate = 'on', stop_command='brake', wait = 0)
+        self.mot_lift.goto_position(40, 30, regulate = 'off', stop_command='brake', wait = 1)
         time.sleep(0.1)
         
     def pen_down(self):
-        self.mot_lift.goto_position(10, 200, regulate = 'on', stop_command='brake', wait = 1)
+        self.mot_lift.goto_position(14, 30, regulate = 'off', stop_command='brake', wait = 1)
         time.sleep(0.1)
 
     def calibrate (self):
@@ -326,6 +326,9 @@ class Writer():
         
     def read_svg (self, image_file):
         # Open simple svg created from template.svg with only paths and no transform.
+        # To remove transformations from svg and convert objects to path, use:
+        # inkscape --verb=EditSelectAll --verb=ObjectToPath --verb=SelectionUnGroup --verb=FileSave --verb=FileClose --verb=FileQuit my_image.svg
+
         from xml.dom import minidom
         
         def svg_point_to_coord (svg_point):
@@ -342,8 +345,10 @@ class Writer():
         xmldoc = minidom.parse(image_file)
 
         itemlist = xmldoc.getElementsByTagName('path') 
-        itemlist = filter(lambda x: x.attributes['id'].value != "borders", itemlist)
-        
+        try:
+            itemlist = filter(lambda x: x.attributes['id'].value != "borders", itemlist)
+        except:
+            pass
         path = [s.attributes['d'].value for s in itemlist]
         
         list_points = []
@@ -356,10 +361,13 @@ class Writer():
                     list_points.append(0)
                     list_points.append(svg_point_to_coord(start))
                     list_points.append(1)
-                if (not isinstance(p, Line)):
-                    length = p.length(error=1e-2)
-                    for i in range(3,int(math.floor(length)),3):
-                        list_points.append(svg_point_to_coord(p.point(i/length)))
+                if ( isinstance(p, Line)):
+                    interv = 15
+                else:
+                    interv = 3
+                length = p.length(error=1e-2)
+                for i in range(interv,int(math.floor(length)),interv):
+                    list_points.append(svg_point_to_coord(p.point(i/length)))
                 end = p.point(1.)
                 list_points.append(svg_point_to_coord(end))
                 actual = end
@@ -367,10 +375,64 @@ class Writer():
         return list_points
         
 
+    def fit_path (self, points):
+        def get_bounding_box (points):
+            min_x,max_x = min([pix[0] for pix in points if type(pix) is not int]),max([pix[0] for pix in points if type(pix) is not int])
+            min_y,max_y = min([pix[1] for pix in points if type(pix) is not int]),max([pix[1] for pix in points if type(pix) is not int])
+            return (min_x,min_y,max_x-min_x,max_y-min_y)
+        def quad_solve (a,b,c):
+            d = b**2-4*a*c
+            if d < 0:
+                return None
+            elif d == 0:
+                return (-b+math.sqrt(d))/(2*a)
+            else:
+                return max((-b+math.sqrt(d))/(2*a), (-b-math.sqrt(d))/(2*a))
+        def get_y_circle (circle, x):
+            xC, yC, rC = circle
+            a = 1
+            b = -2 * yC
+            c = -2*xC*x + yC**2 - rC**2 + x**2 + xC**2
+            return quad_solve (a,b,c)
+        def point_pos(x0, y0, d, theta):
+            theta_rad = math.radians(theta)
+            return x0 + d*math.cos(theta_rad), y0 + d*math.sin(theta_rad)
+        def get_circles (r1, r2, xA, yA, xB, yB):
+            angle_min = 16
+            left_top     = (xB,yB,r1+r2)
+            x,y = point_pos(xA, yA, r2, 180-angle_min)
+            left_bottom  = (x,y,r1)
+            return (left_top, left_bottom)
+        def drange(start, stop, step):
+            r = start
+            while r < stop:
+            	yield r
+            	r += step
+        
+        (bbox_x, bbox_y, bbox_w, bbox_h) = get_bounding_box (points)
+        (left_top, left_bottom) = get_circles (Writer.r1, Writer.r2, Writer.xA, Writer.yA, Writer.xB, Writer.yB)
+        
+        min_x = max(left_top[0] - left_top[2] , left_bottom[0] - left_bottom[2] )
+        best_fit, best_fit_x, best_fit_y, best_scale = 10000, 0,0,0
+        mx = (Writer.xB + Writer.xA)/2.
+        for x in drange(min_x, mx, 0.5):
+            y1,y2 = get_y_circle(left_top,x)-1, get_y_circle(left_bottom,x)+1
+            if (y1!=None and y2 != None):
+                if (y1> y2):
+                    if abs(((mx-x)*2)/(y1-y2) - (bbox_w/bbox_h)) < best_fit:
+                        best_fit, best_fit_x, best_fit_y, best_scale = abs((mx-x)*2)/(y1-y2) - (bbox_w/bbox_h), x, y2, (mx-x)*2 / bbox_w
+        
+        new_points = []
+        for point in points:
+            if type(point) is int:
+                new_points.append (point)
+            else:
+                new_points.append(((point[0]-bbox_x)*best_scale + best_fit_x,(point[1]-bbox_y)*best_scale + best_fit_y))
+        return new_points
+                    
         
     def draw_image (self, image_file = 'images/drawing.svg', max_speed=70.):
-        list_points = self.read_svg (image_file)
-        
+        list_points = self.fit_path (self.read_svg (image_file))
         self.follow_path(list_points, max_speed=max_speed)
     
     def follow_mouse (self, path="/dev/input/by-id/usb-0461_USB_Optical_Mouse-event-mouse"):
@@ -407,11 +469,10 @@ class Writer():
                 if (not self.set_speed_to_coordinates (ciblex,cibley,brake=1.,max_speed = 100)):
                     self.mot_A.stop()
                     self.mot_B.stop()
-    
+
 wri = Writer(calibrate = True)
 
 wri.pen_up()
 wri.draw_image(image_file = 'images/test.svg',max_speed=50)
 #wri.follow_mouse()
 wri.pen_up()
-
