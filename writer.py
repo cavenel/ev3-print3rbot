@@ -470,9 +470,15 @@ class Writer():
                     self.mot_A.stop()
                     self.mot_B.stop()
 
-wri = Writer(calibrate = True)
 
-wri.pen_up()
-wri.draw_image(image_file = 'images/test.svg',max_speed=50)
-#wri.follow_mouse()
-wri.pen_up()
+def main():
+    wri = Writer(calibrate = True)
+    wri.pen_up()
+    wri.draw_image(image_file = 'images/test.svg',max_speed=50)
+    #wri.follow_mouse()
+    wri.pen_up()
+
+
+
+if __name__ == '__main__':
+    main()
