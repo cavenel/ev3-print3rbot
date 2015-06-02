@@ -17,7 +17,7 @@ apt-get install libboost-python-dev python-setuptools python-pil
 
 * Now, the actual module installation:
 ```
-easy_install http://ddemidov.github.io/ev3dev-lang-python/python_ev3dev-latest.egg
+easy_install -U python-ev3dev
 ```
 
 ### EV3-Print3rbot code
