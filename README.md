@@ -2,7 +2,9 @@
 
 Python code for the EV3-Print3rbot, based on the [ev3dev project](http://ev3dev.org).
 
-## Dependencies
+## Installation
+
+### Dependencies
 
 The ev3dev version must be at least [ev3dev-jessie-2015-05-01](https://github.com/ev3dev/ev3dev/releases/tag/ev3dev-jessie-2015-05-01).
 
@@ -18,7 +20,42 @@ apt-get install libboost-python-dev python-setuptools python-pil
 easy_install http://ddemidov.github.io/ev3dev-lang-python/python_ev3dev-latest.egg
 ```
 
+### EV3-Print3rbot code
+
+To put the EV3-Print3rbot code  on your EV3, clone this repository:
+```
+git clone https://github.com/cavenel/ev3-print3rbot.git
+cd ev3-print3rbot/
+```
+You can then launch the robot using
+```
+python writer.py
+```
+or make the file executable and launch it directly:
+```
+chmod +x writer.py
+./writer.py
+```
+EV3-Print3rbot can then be launched from brickman via the file explorer.
+
 ## Usage
+
+### Configuration
+
+The file `writer.py` contains four parameters that may need to be tuned if you did not follow precisely the building instructions: `xA`, `yA`, `xB`, `yB`, `r1` and `r2`. They define the position and length of the robots arms:
+```
+          .E      The pen is at coordinates E = (xE,yE)
+         / \      r1 = CE = DE = 17.3125 lego units.
+        /   \     r2 = AC = BD = 11 lego units.
+       /     \    A  = (0,0)
+     C.       .D  B  = (6,0)
+       \     /
+        \   /
+        A. .B
+       -------
+       [robot]
+       -------
+```
 
 ### Drawing an SVG image
 
@@ -33,6 +70,7 @@ The image will be automatically resized to fit in the robot drawing area. To dra
 wri = Writer(calibrate = True)
 wri.draw_image(image_file = 'images/test.svg')
 ```
+The image must be uploaded on the EV3 first. You can use any SFTP client program to transfer files, like WinSCP (Windows) or NetworkManager (Ubuntu). 
 
 ### Using mouse as input
 
