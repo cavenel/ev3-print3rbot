@@ -12,7 +12,7 @@ The code uses the [ev3dev Python API](https://github.com/ddemidov/ev3dev-lang-py
 
 * Prerequisites:
 ```
-apt-get install libboost-python-dev python-setuptools python-pil
+apt-get install libboost-python1.55.0 python-setuptools python-pil
 ```
 
 * Now, the actual module installation:
