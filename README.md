@@ -8,6 +8,11 @@ Python code for the EV3-Print3rbot, based on the [ev3dev project](http://ev3dev.
 
 The ev3dev version must be at least [ev3dev-jessie-2015-05-01](https://github.com/ev3dev/ev3dev/releases/tag/ev3dev-jessie-2015-05-01).
 
+The distribution must be up to date:
+```
+apt-get update && apt-get dist-upgrade
+```
+
 The code uses the [ev3dev Python API](https://github.com/ddemidov/ev3dev-lang-python) from @ddemidov. To install it:
 
 * Prerequisites:
@@ -24,6 +29,7 @@ easy_install -U python-ev3dev
 
 To put the EV3-Print3rbot code  on your EV3, clone this repository:
 ```
+apt-get install git
 git clone https://github.com/cavenel/ev3-print3rbot.git
 cd ev3-print3rbot/
 ```
