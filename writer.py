@@ -65,10 +65,10 @@ class mymotor(Motor):
 class Writer():
     
     def __init__(self, calibrate=True):
-        self.mot_A    = mymotor(OUTPUT_D)
-
+        self.mot_A    = mymotor(OUTPUT_C)
         self.mot_B    = mymotor(OUTPUT_A)
-        self.mot_lift = mymotor(OUTPUT_C)
+        
+        self.mot_lift = mymotor(OUTPUT_B)
 
         self.touch_A  = TouchSensor(INPUT_3)
         self.touch_B  = TouchSensor(INPUT_2)
