@@ -2,12 +2,12 @@
 # coding: utf-8
 
 import math, os, time
-from ev3dev import *
+from ev3dev.ev3 import *
 
 from svg.parser import parse_path
 from svg.path import Line
         
-class mymotor(motor):
+class mymotor(Motor):
     def stop(self, stop_command='coast'):
         self.stop_command = stop_command
         self.command = "stop"
@@ -65,13 +65,13 @@ class mymotor(motor):
 class Writer():
     
     def __init__(self, calibrate=True):
-        self.mot_A    = mymotor(OUTPUT_A)
+        self.mot_A    = mymotor(OUTPUT_D)
 
-        self.mot_B    = mymotor(OUTPUT_C)
-        self.mot_lift = mymotor(OUTPUT_B)
+        self.mot_B    = mymotor(OUTPUT_A)
+        self.mot_lift = mymotor(OUTPUT_C)
 
-        self.touch_A  = touch_sensor(INPUT_3)
-        self.touch_B  = touch_sensor(INPUT_2)
+        self.touch_A  = TouchSensor(INPUT_3)
+        self.touch_B  = TouchSensor(INPUT_2)
         
         if (calibrate):
             self.calibrate()
