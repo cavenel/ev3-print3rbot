@@ -9,7 +9,7 @@ from svg.path import Line
 
 class mymotor(Motor):
     def stop(self, stop_command='coast'):
-        self.stop_command = stop_command
+        self.stop_action = stop_command
         self.command = "stop"
 
     def reset_position(self, value = 0):
@@ -24,17 +24,18 @@ class mymotor(Motor):
             time.sleep(0.05)
 
     def rotate_forever(self, speed=480, regulate='on', stop_command='brake'):
-        self.stop_command = stop_command
+        self.stop_action = stop_command
+        self.speed_regulation = regulate
         if regulate=='on':
             self.speed_sp = int(speed)
+            self.command = 'run-forever'
         else:
             self.duty_cycle_sp = int(speed)
-        self.speed_regulation_enabled = regulate
-        self.command = 'run-forever'
+            self.command = 'run-direct'
 
     def goto_position(self, position, speed=480, up=0, down=0, regulate='on', stop_command='brake', wait=0):
-        self.stop_command = stop_command
-        self.speed_regulation_enabled = regulate
+        self.stop_action = stop_command
+        self.speed_regulation = regulate
         self.ramp_up_sp,self.ramp_down_sp = up,down
         if regulate=='on':
             self.speed_sp = speed
