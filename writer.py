@@ -6,12 +6,12 @@ from ev3dev.ev3 import *
 
 from svg.parser import parse_path
 from svg.path import Line
-        
+
 class mymotor(Motor):
     def stop(self, stop_command='coast'):
-        self.stop_command = stop_command
+        self.stop_action = stop_command
         self.command = "stop"
-    
+
     def reset_position(self, value = 0):
         self.stop()
         iter = 1
@@ -22,19 +22,20 @@ class mymotor(Motor):
             except:
                 print "impossible to fix position, attempt",iter-1,"on 10."
             time.sleep(0.05)
-            
+
     def rotate_forever(self, speed=480, regulate='on', stop_command='brake'):
-        self.stop_command = stop_command
+        self.stop_action = stop_command
+        self.speed_regulation = regulate
         if regulate=='on':
             self.speed_sp = int(speed)
+            self.command = 'run-forever'
         else:
             self.duty_cycle_sp = int(speed)
-        self.speed_regulation_enabled = regulate
-        self.command = 'run-forever'
+            self.command = 'run-direct'
 
     def goto_position(self, position, speed=480, up=0, down=0, regulate='on', stop_command='brake', wait=0):
-        self.stop_command = stop_command
-        self.speed_regulation_enabled = regulate
+        self.stop_action = stop_command
+        self.speed_regulation = regulate
         self.ramp_up_sp,self.ramp_down_sp = up,down
         if regulate=='on':
             self.speed_sp = speed
@@ -43,7 +44,7 @@ class mymotor(Motor):
         self.position_sp = position
         sign = math.copysign(1, self.position - position)
         self.command = 'run-to-abs-pos'
-        
+
         if (wait):
             new_pos = self.position
             nb_same = 0
@@ -63,16 +64,16 @@ class mymotor(Motor):
 
 
 class Writer():
-    
+
     def __init__(self, calibrate=True):
         self.mot_A    = mymotor(OUTPUT_C)
         self.mot_B    = mymotor(OUTPUT_A)
-        
+
         self.mot_lift = mymotor(OUTPUT_B)
 
         self.touch_A  = TouchSensor(INPUT_3)
         self.touch_B  = TouchSensor(INPUT_2)
-        
+
         if (calibrate):
             self.calibrate()
         self.pen_up()
@@ -80,7 +81,7 @@ class Writer():
     def pen_up (self):
         self.mot_lift.goto_position(40, 30, regulate = 'off', stop_command='brake', wait = 1)
         time.sleep(0.1)
-        
+
     def pen_down(self):
         self.mot_lift.goto_position(14, 30, regulate = 'off', stop_command='brake', wait = 1)
         time.sleep(0.1)
@@ -98,9 +99,9 @@ class Writer():
         time.sleep(0.1)
         self.mot_lift.reset_position()
         time.sleep(1)
-        
+
         self.pen_up()
-        
+
         self.mot_A.reset_position()
         self.mot_B.reset_position()
 
@@ -108,8 +109,8 @@ class Writer():
             self.mot_A.goto_position(-200, speed=400, regulate='on', stop_command='coast', wait=1)
         if (self.touch_B.value()):
             self.mot_B.goto_position(200, speed=400, regulate='on', stop_command='coast', wait=1)
-        self.mot_B.rotate_forever(speed=-50, regulate='off')   
-        self.mot_A.rotate_forever(speed=50, regulate='off')   
+        self.mot_B.rotate_forever(speed=-50, regulate='off')
+        self.mot_A.rotate_forever(speed=50, regulate='off')
         stop_A = stop_B = False
         start = time.time()
         while True:
@@ -140,7 +141,7 @@ class Writer():
         self.mot_B.stop()
         self.mot_A.reset_position()
         self.mot_B.reset_position()
-        
+
     # All coordinates are in Lego distance (1 = distance between two holes center)
     # Coordinates of gear centre A
     xA, yA = 0.,0.
@@ -193,9 +194,9 @@ class Writer():
                 xIB = xIB2
                 yIB = yIB2
         except:
-            return None  
+            return None
         alpha = 180. - 360 * math.acos((xIA-Writer.xA)/Writer.r2) / (2.*math.pi)
-        beta =  360. * math.acos((xIB-Writer.xB)/Writer.r2) / (2.*math.pi) 
+        beta =  360. * math.acos((xIB-Writer.xB)/Writer.r2) / (2.*math.pi)
         return (alpha, beta)
 
     ## converts coordinates x,y into motor position
@@ -220,7 +221,7 @@ class Writer():
             xE = xE2
             yE = yE2
         return xE, yE
-    
+
     ## Converts motor position to coordinates
     @staticmethod
     def motorpos_to_coordinates (pos1, pos2):
@@ -228,10 +229,10 @@ class Writer():
             #0     = 14
             #-2970 = 90
             return 14. + pos * (90.-14) / 2970.
-        
+
         (alpha, beta) = (pos_to_angle(pos1), pos_to_angle(-pos2))
         return Writer.angles_to_coordinates (alpha, beta)
-    
+
     @staticmethod
     def get_angle (xA, yA, xB, yB, xC, yC):
         ab2 = (xB-xA)*(xB-xA) + (yB-yA)*(yB-yA)
@@ -256,9 +257,9 @@ class Writer():
 
         nextx = myx + (x - myx) / (dist * 100.)
         nexty = myy + (y - myy) / (dist * 100.)
-        
+
         next_posB, next_posA = Writer.coordinates_to_motorpos (nextx, nexty)
-        
+
         speed = max_speed
         slow_down_dist = (max_speed / 50.)
         if (dist < slow_down_dist):
@@ -272,11 +273,11 @@ class Writer():
         else:
             speedA = speed
             speedB = abs(speedA / distA * distB)
-        
+
         self.mot_B.rotate_forever((math.copysign(speedB, distB)), regulate='off')
         self.mot_A.rotate_forever((math.copysign(speedA, distA)), regulate='off')
         return 1
-        
+
     def goto_point (self, x,y, brake=1., last_x=None, last_y=None, max_speed=70.):
         if (last_x == None or last_y == None):
             initposB, initposA = self.mot_B.position, self.mot_A.position
@@ -291,7 +292,7 @@ class Writer():
         if brake == 1:
             self.mot_B.stop(stop_command='brake')
             self.mot_A.stop(stop_command='brake')
-            
+
     def follow_path (self, list_points, max_speed=70):
         pen_change = False
         lastx = lasty = None
@@ -323,14 +324,14 @@ class Writer():
             lastx, lasty = x, y
         self.mot_A.stop()
         self.mot_B.stop()
-        
+
     def read_svg (self, image_file):
         # Open simple svg created from template.svg with only paths and no transform.
         # To remove transformations from svg and convert objects to path, use:
         # inkscape --verb=EditSelectAll --verb=ObjectToPath --verb=SelectionUnGroup --verb=FileSave --verb=FileClose --verb=FileQuit my_image.svg
 
         from xml.dom import minidom
-        
+
         def svg_point_to_coord (svg_point):
             scale = 10.
             ciblex = svg_point.real/scale
@@ -340,17 +341,17 @@ class Writer():
             if abs(a-b)<0.0001:
                 return 1
             else:
-                return 0    
-        
+                return 0
+
         xmldoc = minidom.parse(image_file)
 
-        itemlist = xmldoc.getElementsByTagName('path') 
+        itemlist = xmldoc.getElementsByTagName('path')
         try:
             itemlist = filter(lambda x: x.attributes['id'].value != "borders", itemlist)
         except:
             pass
         path = [s.attributes['d'].value for s in itemlist]
-        
+
         list_points = []
         actual = (0+0j)
         for p_ in path:
@@ -373,7 +374,7 @@ class Writer():
                 actual = end
         list_points.append(0)
         return list_points
-        
+
 
     def fit_path (self, points):
         def get_bounding_box (points):
@@ -406,12 +407,12 @@ class Writer():
         def drange(start, stop, step):
             r = start
             while r < stop:
-            	yield r
-            	r += step
-        
+                yield r
+                r += step
+
         (bbox_x, bbox_y, bbox_w, bbox_h) = get_bounding_box (points)
         (left_top, left_bottom) = get_circles (Writer.r1, Writer.r2, Writer.xA, Writer.yA, Writer.xB, Writer.yB)
-        
+
         min_x = max(left_top[0] - left_top[2] , left_bottom[0] - left_bottom[2] )
         best_fit, best_fit_x, best_fit_y, best_scale = 10000, 0,0,0
         mx = (Writer.xB + Writer.xA)/2.
@@ -421,7 +422,7 @@ class Writer():
                 if (y1> y2):
                     if abs(((mx-x)*2)/(y1-y2) - (bbox_w/bbox_h)) < best_fit:
                         best_fit, best_fit_x, best_fit_y, best_scale = abs((mx-x)*2)/(y1-y2) - (bbox_w/bbox_h), x, y2, (mx-x)*2 / bbox_w
-        
+
         new_points = []
         for point in points:
             if type(point) is int:
@@ -429,12 +430,12 @@ class Writer():
             else:
                 new_points.append(((point[0]-bbox_x)*best_scale + best_fit_x,(point[1]-bbox_y)*best_scale + best_fit_y))
         return new_points
-                    
-        
+
+
     def draw_image (self, image_file = 'images/drawing.svg', max_speed=70.):
         list_points = self.fit_path (self.read_svg (image_file))
         self.follow_path(list_points, max_speed=max_speed)
-    
+
     def follow_mouse (self, path="/dev/input/by-id/usb-0461_USB_Optical_Mouse-event-mouse"):
         if not os.path.exists(path):
             return
@@ -454,7 +455,7 @@ class Writer():
                     ciblex = startx-x
                     cibley = starty+y
                     print ciblex, cibley
-                
+
             if ("BTN_LEFT" in dev.buttons.keys()):
                 if (pen_up and dev.buttons["BTN_LEFT"]):
                     pen_up = False
