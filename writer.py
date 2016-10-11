@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 
 import math, os, time
@@ -20,7 +20,7 @@ class mymotor(Motor):
             try:
                 self.position = value
             except:
-                print "impossible to fix position, attempt",iter-1,"on 10."
+                print ("impossible to fix position, attempt",iter-1,"on 10.")
             time.sleep(0.05)
 
     def rotate_forever(self, speed=480, regulate='on', stop_command='brake'):
@@ -454,8 +454,7 @@ class Writer():
                     x,y = dev.axes["REL_X"]/100., dev.axes["REL_Y"]/100.
                     ciblex = startx-x
                     cibley = starty+y
-                    print ciblex, cibley
-
+                    print ((ciblex, cibley))
             if ("BTN_LEFT" in dev.buttons.keys()):
                 if (pen_up and dev.buttons["BTN_LEFT"]):
                     pen_up = False
