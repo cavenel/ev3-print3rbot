@@ -8,11 +8,6 @@ Python code for the EV3-Print3rbot, based on the [ev3dev project](http://ev3dev.
 
 The ev3dev version must be at least [ev3-ev3dev-jessie-2015-12-30](https://github.com/ev3dev/ev3dev/releases/download/ev3dev-jessie-2015-12-30/ev3-ev3dev-jessie-2015-12-30.img.xz).
 
-The distribution must be up to date:
-```
-apt-get update && apt-get dist-upgrade
-```
-
 The code uses the [ev3dev Python3 API](https://github.com/rhempel/ev3dev-lang-python) from @rhempel and @ddemidov. It is already installed on the ev3dev distribution.
 
 ### EV3-Print3rbot code
@@ -27,7 +22,7 @@ You can then launch the robot using
 ```
 python3 writer.py
 ```
-or make the file executable and launch it directly:
+or make sure the file is executable and launch it directly:
 ```
 chmod +x writer.py
 ./writer.py
