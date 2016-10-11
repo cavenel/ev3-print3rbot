@@ -6,24 +6,14 @@ Python code for the EV3-Print3rbot, based on the [ev3dev project](http://ev3dev.
 
 ### Dependencies
 
-The ev3dev version must be at least [ev3dev-jessie-2015-05-01](https://github.com/ev3dev/ev3dev/releases/tag/ev3dev-jessie-2015-05-01).
+The ev3dev version must be at least [ev3-ev3dev-jessie-2015-12-30](https://github.com/ev3dev/ev3dev/releases/download/ev3dev-jessie-2015-12-30/ev3-ev3dev-jessie-2015-12-30.img.xz).
 
 The distribution must be up to date:
 ```
 apt-get update && apt-get dist-upgrade
 ```
 
-The code uses the [ev3dev Python API](https://github.com/ddemidov/ev3dev-lang-python) from @ddemidov. To install it:
-
-* Prerequisites:
-```
-apt-get install libboost-python1.55.0 python-setuptools python-pil
-```
-
-* Now, the actual module installation:
-```
-easy_install -U python-ev3dev
-```
+The code uses the [ev3dev Python3 API](https://github.com/rhempel/ev3dev-lang-python) from @rhempel and @ddemidov. It is already installed on the ev3dev distribution.
 
 ### EV3-Print3rbot code
 
@@ -35,7 +25,7 @@ cd ev3-print3rbot/
 ```
 You can then launch the robot using
 ```
-python writer.py
+python3 writer.py
 ```
 or make the file executable and launch it directly:
 ```
