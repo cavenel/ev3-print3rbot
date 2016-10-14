@@ -151,7 +151,7 @@ class QuadraticBezier(object):
         BA = B / A2
 
         return (A32 * Sabc + A2 * B * (Sabc - C2) + (4 * C * A - B ** 2) *
-                log((2 * A2 + BA + Sabc) / (BA + C2))) / (4 * A32)
+                log((2 * A2 + BA + Sabc) / (BA + C2 + 0.00001))) / (4 * A32 + 0.00001)
 
 
 class Arc(object):
