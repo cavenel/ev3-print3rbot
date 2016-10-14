@@ -83,7 +83,7 @@ class Writer():
         time.sleep(0.1)
 
     def pen_down(self):
-        self.mot_lift.goto_position(14, 30, regulate = 'off', stop_command='brake', wait = 1)
+        self.mot_lift.goto_position(0, 30, regulate = 'off', stop_command='brake', wait = 1)
         time.sleep(0.1)
 
     def calibrate (self):
@@ -109,8 +109,8 @@ class Writer():
             self.mot_A.goto_position(-200, speed=400, regulate='on', stop_command='coast', wait=1)
         if (self.touch_B.value()):
             self.mot_B.goto_position(200, speed=400, regulate='on', stop_command='coast', wait=1)
-        self.mot_B.rotate_forever(speed=-50, regulate='off')
-        self.mot_A.rotate_forever(speed=50, regulate='off')
+        self.mot_B.rotate_forever(speed=-25, regulate='off')
+        self.mot_A.rotate_forever(speed=25, regulate='off')
         stop_A = stop_B = False
         start = time.time()
         while True:
@@ -411,8 +411,7 @@ class Writer():
                 r += step
 
         (bbox_x, bbox_y, bbox_w, bbox_h) = get_bounding_box (points)
-        (left_top, left_bottom) = get_circles (Writer.r1, Writer.r2, Writer.xA, Writer.yA, Writer.xB, Writer.yB)
-
+        (left_top, left_bottom) = get_circles (Writer.r1 - 1, Writer.r2, Writer.xA, Writer.yA, Writer.xB, Writer.yB)
         min_x = max(left_top[0] - left_top[2] , left_bottom[0] - left_bottom[2] )
         best_fit, best_fit_x, best_fit_y, best_scale = 10000, 0,0,0
         mx = (Writer.xB + Writer.xA)/2.
@@ -474,7 +473,7 @@ class Writer():
 def main():
     wri = Writer(calibrate = True)
     wri.pen_up()
-    wri.draw_image(image_file = 'images/test.svg',max_speed=50)
+    wri.draw_image(image_file = 'images/test.svg',max_speed=35)
     #wri.follow_mouse()
     wri.pen_up()
 
