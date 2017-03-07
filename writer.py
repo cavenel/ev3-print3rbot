@@ -6,6 +6,7 @@ from ev3dev.ev3 import *
 
 from svg.parser import parse_path
 from svg.path import Line
+import evdev
 
 class mymotor(Motor):
     def stop(self, stop_command='coast'):
@@ -78,13 +79,15 @@ class Writer():
             self.calibrate()
         self.pen_up()
 
-    def pen_up (self):
-        self.mot_lift.goto_position(40, 30, regulate = 'off', stop_command='brake', wait = 1)
-        time.sleep(0.1)
+    def pen_up (self, wait=1):
+        self.mot_lift.goto_position(40, 30, regulate = 'off', stop_command='brake', wait = wait)
+        if wait:
+            time.sleep(0.1)
 
-    def pen_down(self):
-        self.mot_lift.goto_position(0, 30, regulate = 'off', stop_command='brake', wait = 1)
-        time.sleep(0.1)
+    def pen_down(self, wait=1):
+        self.mot_lift.goto_position(0, 30, regulate = 'off', stop_command='brake', wait = wait)
+        if wait:
+            time.sleep(0.1)
 
     def calibrate (self):
         self.mot_lift.rotate_forever(speed=-50, regulate='off')
@@ -261,7 +264,7 @@ class Writer():
         next_posB, next_posA = Writer.coordinates_to_motorpos (nextx, nexty)
 
         speed = max_speed
-        slow_down_dist = (max_speed / 50.)
+        slow_down_dist = (max_speed / 20.)
         if (dist < slow_down_dist):
             speed -= (slow_down_dist-dist)/slow_down_dist * (brake * (max_speed-20))/1.
 
@@ -435,40 +438,35 @@ class Writer():
         list_points = self.fit_path (self.read_svg (image_file))
         self.follow_path(list_points, max_speed=max_speed)
 
-    def follow_mouse (self, path="/dev/input/by-id/usb-0461_USB_Optical_Mouse-event-mouse"):
-        if not os.path.exists(path):
+    def follow_mouse (self):
+        devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
+        for dev in devices:
+            if "Mouse" in  dev.name:
+                break
+        else:
+            print ("No mouse found. Please check usb input.")
             return
         posB, posA = self.mot_B.position, self.mot_A.position
-        startx, starty = Writer.motorpos_to_coordinates (posB, posA)
+        ciblex, cibley = Writer.motorpos_to_coordinates (posB, posA)
         self.pen_up()
-        pen_up = True
-        import evdev
-        dev = evdev.Device(path)
-        while 1:
-            dev.poll()
-            time.sleep(0.005)
-            if ("BTN_RIGHT" in dev.buttons.keys()):
-                #self.pen_up()
-                if (dev.buttons["BTN_RIGHT"]):
-                    x,y = dev.axes["REL_X"]/100., dev.axes["REL_Y"]/100.
-                    ciblex = startx-x
-                    cibley = starty+y
-                    print ((ciblex, cibley))
-            if ("BTN_LEFT" in dev.buttons.keys()):
-                if (pen_up and dev.buttons["BTN_LEFT"]):
-                    pen_up = False
-                    self.pen_down()
-                elif (not pen_up and not dev.buttons["BTN_LEFT"]):
-                    pen_up = True
-                    self.pen_up()
-            if ("REL_X" in dev.axes.keys()) and ("REL_Y" in dev.axes.keys()):
-                x,y = dev.axes["REL_X"]/100., dev.axes["REL_Y"]/100.
-                ciblex = startx-x
-                cibley = starty+y
-                if (not self.set_speed_to_coordinates (ciblex,cibley,brake=1.,max_speed = 100)):
-                    self.mot_A.stop()
-                    self.mot_B.stop()
-
+        while True:
+            try:
+                for event in dev.read():
+                    if (event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT):
+                        if (event.value):
+                            self.pen_down(wait=0)
+                        else:
+                            self.pen_up(wait=0)
+                    if (event.type == evdev.ecodes.EV_REL and event.code == evdev.ecodes.REL_X):
+                        ciblex -= event.value/100.
+                    if (event.type == evdev.ecodes.EV_REL and event.code == evdev.ecodes.REL_Y):
+                        cibley += event.value/100.
+            except:
+                pass
+            if (not self.set_speed_to_coordinates (ciblex,cibley,brake=1.0,max_speed = 100)):
+                self.mot_A.stop(stop_command='hold')
+                self.mot_B.stop(stop_command='hold')
+            time.sleep(0.1)
 
 def main():
     wri = Writer(calibrate = True)
