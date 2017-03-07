@@ -6,7 +6,7 @@ Python code for the EV3-Print3rbot, based on the [ev3dev project](http://ev3dev.
 
 ### Dependencies
 
-The ev3dev version must be at least [ev3-ev3dev-jessie-2015-12-30](https://github.com/ev3dev/ev3dev/releases/download/ev3dev-jessie-2015-12-30/ev3-ev3dev-jessie-2015-12-30.img.xz).
+The ev3dev version must be at least [ev3dev-jessie-ev3-generic-2017-02-11](https://github.com/ev3dev/ev3dev/releases/download/ev3dev-jessie-2017-02-11/ev3dev-jessie-ev3-generic-2017-02-11.zip).
 
 The code uses the [ev3dev Python3 API](https://github.com/rhempel/ev3dev-lang-python) from @rhempel and @ddemidov. It is already installed on the ev3dev distribution.
 
@@ -14,7 +14,6 @@ The code uses the [ev3dev Python3 API](https://github.com/rhempel/ev3dev-lang-py
 
 To put the EV3-Print3rbot code  on your EV3, clone this repository:
 ```
-apt-get install git
 git clone https://github.com/cavenel/ev3-print3rbot.git
 cd ev3-print3rbot/
 ```
@@ -65,7 +64,7 @@ The image must be uploaded on the EV3 first. You can use any SFTP client program
 
 ### Using mouse as input
 
-The robot can use mouse as input. The code is based on the [evdev package](https://pypi.python.org/pypi/evdev) (included in the source). To use mouse as input, use the code:
+The robot can use mouse as input. The code is based on the [python-evdev package](https://python-evdev.readthedocs.io/en/latest/) (already installed on ev3dev). To use mouse as input, use the code:
 
 ```
 wri = Writer(calibrate = True)
